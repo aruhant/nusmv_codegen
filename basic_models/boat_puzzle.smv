@@ -1,0 +1,61 @@
+-- a man, a goat, a wolf, and a cabbage are on the bank of a river that can be crossed by a boat
+-- the boat can only be driven by the man and can only carry a maximum of one more passenger
+-- the goat must never be left alone with the cabbage or the wolf
+-- objective: transport all passengers to the other side of the river
+
+MODULE main
+    VAR
+    goat: boolean;
+    wolf: boolean;
+    cabbage: boolean;
+    man: boolean;
+    carrying: {g, w, c, m_only, none};
+
+    ASSIGN
+    init(goat) := TRUE;
+    init(wolf) := TRUE;
+    init(cabbage) := TRUE;
+    init(man) := TRUE;
+    init(carrying) := none;
+    next(carrying) := case
+        man = goat: g;
+        TRUE: none;
+        esac union
+        case
+        man = wolf & goat != cabbage: w;
+        TRUE: none;
+        esac union
+        case
+        man = cabbage & goat != wolf: c;
+        TRUE: none;
+        esac union 
+        case
+        goat != wolf & goat != cabbage: m_only;
+        TRUE: none;
+        esac;
+
+    next(goat) :=
+        case
+            next(carrying) = g: !goat;
+            TRUE: goat;
+        esac;
+    next(wolf) :=
+        case
+            next(carrying) = w: !wolf;
+            TRUE: wolf;
+        esac;
+    next(cabbage) :=
+        case
+            next(carrying) = c: !cabbage;
+            TRUE: cabbage;
+        esac;
+    next(man) :=
+        case
+            next(carrying) != none: !man;
+            TRUE: man;
+        esac;
+
+-- we know that this property is not satisfied
+-- the counterexample provided is the solution to our puzzle
+LTLSPEC 
+!(TRUE U (!man & !goat & !wolf & !cabbage))

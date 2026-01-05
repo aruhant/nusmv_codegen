@@ -1,0 +1,13 @@
+MODULE nand2 (in1, in2)
+VAR
+    out: boolean;
+
+ASSIGN
+    init(out) := TRUE;
+    next(out) := !(in1 & in2);
+
+MODULE main
+VAR
+    a: boolean;
+    b: boolean;
+    q: nand2(a, b);

@@ -1,0 +1,56 @@
+-- this can is the program that models the following python code (ignoring time spent in critical section):
+"
+y = 1
+def thread(y):
+    global y
+    // non-critical section
+    // wait
+    // the while and increment are atomic
+    while y == 0:
+            y = 1
+            // enter critical section
+            while random() % 2 != 0:
+              // critical work
+            y = 0       
+"
+
+
+MODULE thread(y, time_spent_in_c)
+VAR
+  location: {nc, w, c, exit};
+
+ASSIGN
+    init(location) := nc;
+    next(location) :=
+        case
+        location = nc : {nc, w};
+        location = w & y>0 : c;
+        location = c & time_spent_in_c<3 : {c, exit};
+        location = c & time_spent_in_c=3 : exit;
+        location = exit : nc;
+        TRUE : location;
+        esac;
+    next(y) :=
+        case
+        location = w & y=1 : 0;
+        location = exit & y=0 : 1;
+        TRUE : y;
+        esac;
+    -- ensures that a thread can only stay in the critical section for 3 time units of its own
+    next(time_spent_in_c) :=
+        case
+        location = c & time_spent_in_c<3 : time_spent_in_c+1;
+        location = exit : 0;
+        TRUE : time_spent_in_c;
+        esac;
+
+MODULE main
+VAR
+  time_spent_in_c: 0..3;
+  y_main: 0..1;
+  prg1: process thread(y_main, time_spent_in_c);
+  prg2: process thread(y_main, time_spent_in_c);
+
+ASSIGN
+    init(y_main) := 1;
+    init(time_spent_in_c) := 0;

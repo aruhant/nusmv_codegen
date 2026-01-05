@@ -1,0 +1,19 @@
+MODULE counter_cell (carry_in)
+VAR
+    value: boolean;
+
+ASSIGN
+    init(value) := FALSE;
+    -- next value is based on the current value and carry_in
+    next(value) := value xor carry_in;
+
+DEFINE
+    -- instantly value gets a value
+    carry_out := carry_in & value;
+
+MODULE main
+VAR
+    bit0: counter_cell(TRUE);
+    -- this is the carry_out that was just calculated
+    bit1: counter_cell(bit0.carry_out);
+    bit2: counter_cell(bit1.carry_out);

@@ -1,0 +1,23 @@
+MODULE nand2 (in1, in2)
+VAR
+    out: boolean;
+
+ASSIGN
+    init(out) := TRUE;
+    -- in1 and in2 dictate the next value of out
+    -- meaning the curent value of out is based on the previous values of in1 and in2
+    next(out) := !(in1 & in2);
+
+MODULE main
+VAR
+
+    x: boolean;
+    y: boolean;
+    q1: nand2(x, q2.out);
+    -- this means the out passed is its currentl value not the next which was just calculated
+    q2: nand2(y, q1.out);
+
+DEFINE
+    -- instantly y gets a value
+    -- based on current q1.out and q2.out values
+    fout := q1.out xor q2.out;

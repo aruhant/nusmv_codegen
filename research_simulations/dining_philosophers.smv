@@ -1,0 +1,56 @@
+-- module philosopher
+MODULE philosopher (left, right)
+    VAR
+        state: {think, eat};
+    ASSIGN
+        init(state) := think;
+        next(state) :=
+            case
+                state = think & left = TRUE & right = TRUE : {eat, think};
+                state = eat : {eat, think};
+                TRUE : state;
+            esac;
+        next(left) :=
+            case
+                next(state) = eat: FALSE;
+                TRUE : left;
+            esac;
+        next(right) :=
+            case
+                next(state) = eat: FALSE;
+                TRUE: right;
+            esac;
+
+FAIRNESS !(state = think);
+FAIRNESS !(state = eat);
+
+MODULE main
+    VAR
+        chopsticks: array 1..11 of boolean;
+        p1: process philosopher(chopsticks[1], chopsticks[2]);
+        p2: process philosopher(chopsticks[2], chopsticks[3]);
+        p3: process philosopher(chopsticks[3], chopsticks[4]);
+        p4: process philosopher(chopsticks[4], chopsticks[5]);
+        p5: process philosopher(chopsticks[5], chopsticks[6]);
+        p6: process philosopher(chopsticks[6], chopsticks[7]);
+        p7: process philosopher(chopsticks[7], chopsticks[8]);
+        p8: process philosopher(chopsticks[8], chopsticks[9]);
+        p9: process philosopher(chopsticks[9], chopsticks[10]);
+        p10: process philosopher(chopsticks[10], chopsticks[11]);
+        p11: process philosopher(chopsticks[11], chopsticks[1]);
+
+
+    ASSIGN
+    init(chopsticks[1]) := TRUE;
+    init(chopsticks[2]) := TRUE;
+    init(chopsticks[3]) := TRUE;
+    init(chopsticks[4]) := TRUE;
+    init(chopsticks[5]) := TRUE;
+    init(chopsticks[6]) := TRUE;
+    init(chopsticks[7]) := TRUE;
+    init(chopsticks[8]) := TRUE;
+    init(chopsticks[9]) := TRUE;
+    init(chopsticks[10]) := TRUE;
+    init(chopsticks[11]) := TRUE;
+
+--"G F p1.state = eat & G F p2.state = eat & G F p3.state = eat & G F p4.state = eat & G F p5.state = eat & G F p6.state = eat & G F p7.state = eat & G F p8.state = eat & G F p9.state = eat & G F p10.state = eat & G F p11.state = eat"

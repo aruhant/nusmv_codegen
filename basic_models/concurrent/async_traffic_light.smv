@@ -1,0 +1,21 @@
+--Functionality: Two traffic lights that are asynchronous to each other
+
+MODULE traffic_light (other)
+VAR
+  state : {red, green, yellow};
+
+ASSIGN
+    init(state) := red;
+    next(state) :=
+        case
+        state = red & other = red : green;
+        state = green : {green, yellow};
+        state = yellow : red;
+        TRUE : state;
+        esac;
+MODULE main
+VAR
+    -- either process will occur but never at the same time
+    -- if tl1 is chosen, tl2 will be blocked until tl1 is done and vice versa
+    tl1 : process traffic_light(tl2.state);
+    tl2 : process traffic_light(tl1.state);

@@ -1,0 +1,140 @@
+--NuSMV code for bakery algorithm 
+MODULE main
+    VAR
+        choosing: array 0..2 of boolean; 
+        ticket_numbers: array 0..2 of 0..3;
+        c1: process customer(choosing, ticket_numbers, 0);
+        c2: process customer(choosing, ticket_numbers, 1);
+        c3: process customer(choosing, ticket_numbers, 2);
+    ASSIGN
+
+MODULE customer(choosing, ticket_numbers, id)
+    VAR
+        location: {l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, c, u, unescapable};
+        partial_max: 0..5;
+        partial_expression: boolean;
+        p: 0..4;
+    ASSIGN
+    init(location) := l1;
+    next(location) :=
+        case
+        p >= 2 & (location = l10 | location = l11 | location = l12 | location = l13): unescapable;
+        location = unescapable: unescapable;
+        -- if locaiton is l10, l11, l12, l13
+            location = l1: l2;
+            location = l2: l3;
+            location = l3: 
+            case
+                ticket_numbers[1] > partial_max: l4;
+                TRUE: l5;
+            esac;
+            location = l4: l5;
+            location = l5: 
+            case
+                ticket_numbers[2] > partial_max: l6;
+                TRUE: l7;
+            esac;
+            location = l6:  l7;
+            location = l7: l8;
+            location = l8: l9;
+            location = l9: 
+            case
+                p <= 2: l10;
+                TRUE: c;
+            esac;
+            location = l10:
+            case
+                choosing[p] = TRUE: l10;
+                TRUE: l11;
+            esac;
+            location = l11: l12;
+            location = l12: l13;
+            location = l13:
+            case
+                (ticket_numbers[p] != 0) & partial_expression : l11;
+                TRUE: l9;
+            esac;
+            location = c: u;
+            location = u: l1;            
+            TRUE : location;
+        esac;
+    init(choosing[id]) := FALSE;
+    next(choosing[id]) :=
+        case
+            location = l1: TRUE;  
+            location = l8: FALSE;
+            TRUE: choosing[id];
+        esac;
+    init(ticket_numbers[id]) := 0;
+    next(ticket_numbers[id]) :=
+        case
+            location = l7: partial_max > 2 ? 3 : partial_max + 1; 
+            location = u: 0;
+            TRUE: ticket_numbers[id];
+        esac;    
+    init(partial_max) := 0;
+    next(partial_max) :=
+        case
+            location = l2: ticket_numbers[0];
+            location = l4: ticket_numbers[1];
+            location = l6: ticket_numbers[2];
+            TRUE: partial_max;
+        esac;
+    init(partial_expression) := FALSE;
+    next(partial_expression) :=
+        case
+            p>=2: FALSE;
+            location = l11: ticket_numbers[p] < ticket_numbers[id];
+            location = l12: partial_expression | (ticket_numbers[p] = ticket_numbers[id] & p < id);
+            TRUE: partial_expression;
+        esac;
+    init(p) := 0;
+    next(p) :=
+        case 
+            p = 4: 4;            
+            location = l8: 0;
+            (next(location) = l9) & (location = l13): p + 1; 
+            TRUE: p;
+        esac;
+
+FAIRNESS !(location = l9);
+FAIRNESS !(location = l13);
+FAIRNESS !(location = l11);
+FAIRNESS !(location = l12);
+FAIRNESS !(location = l10);
+FAIRNESS !(location = l8);
+FAIRNESS !(location = l7);
+FAIRNESS !(location = l6);
+FAIRNESS !(location = l5);
+FAIRNESS !(location = l4);
+FAIRNESS !(location = l3);
+FAIRNESS !(location = l2);
+FAIRNESS !(location = l1);
+FAIRNESS !(location = c);
+FAIRNESS !(location = u);
+
+/--
+// global variables
+const int N = 4;
+bool choosing[N];
+int ticket_numbers[N];
+
+// locking
+(l1) choosing[id] = true;
+(l2) partial_max = ticket_numbers[0];
+(l3) partial_max = ticket_numbers[1] > partial_max  ? (l4) then partial_max = ticket_numbers[1];  
+(l5) partial_max = ticket_numbers[2] > partial_max  ? (l6) then partial_max = ticket_numbers[2];  
+(l7) ticket_numbers[id] = partial_max + 1;
+(l8) choosing[id] = false;
+int p = 0;
+(l9) while (p < N) {
+    (l10) while (choosing[p]) {}
+    (l13) while (ticket_numbers[p] != 0 &  (l11) (ticket_numbers[p] < ticket_numbers[id] | (l12) (ticket_numbers[p] == ticket_numbers[id] & p < id))) {}
+    p++;
+}
+// critical section
+(c)
+// unlocking
+(u)
+    ticket_numbers[id] = 0;
+--/
